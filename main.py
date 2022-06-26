@@ -1,6 +1,8 @@
 from functools import reduce
 import numpy as np
 
+DEFAULT_GIMBLE_LOCK_THESHOLD = 1e-7
+
 #region Helpers
 
 def cos_sin(theta):
@@ -10,7 +12,7 @@ def normalized(array: np.array):
     return array / np.linalg.norm(array)
 
 def matmul_n(*mats):
-    reduce(lambda a, b: np.matmul(a, b), mats)
+    return reduce(lambda a, b: np.matmul(a, b), mats)
 
 #endregion
 
@@ -50,15 +52,29 @@ def euler_matrix(yaw, pitch, roll):
 
 #region Matrix to Euler 
 
-def matrix_to_euler(m):
+def matrix_to_euler(m, gimble_lock_threshold=DEFAULT_GIMBLE_LOCK_THESHOLD):
     mxx = m[0][0]
     mxy = m[1][0]
     mxz = m[2][0]
+
+    if mxx**2 + mxy**2 < gimble_lock_threshold:
+        mzx = m[0][2]
+        mzy = m[1][2]
+        return matrix_to_euler_gimble_locked(mxz, mzx, mzy)
+    
     myz = m[2][1]
     mzz = m[2][2]
-    return matrix_to_euler_optimized(mxx, mxy, mxz, myz, mzz)
 
-def matrix_to_euler_optimized(mxx, mxy, mxz, myz, mzz):
+    return matrix_to_euler_standard(mxx, mxy, mxz, myz, mzz)
+
+def matrix_to_euler_gimble_locked(mxz, mzx, mzy):
+    sgn_pitch = np.sign(-mxz)
+    cos_yaw = mzx * sgn_pitch
+    sin_yaw = mzy * sgn_pitch
+    yaw = np.arctan2(sin_yaw, cos_yaw)
+    return np.array([yaw, np.pi/2 * sgn_pitch, 0])
+
+def matrix_to_euler_standard(mxx, mxy, mxz, myz, mzz):
     # Yaw is the angle column-x.xy makes the x-axis. (+y is positive)
     yaw = np.arctan2(mxy, mxx)
     # Pitch is the angle column-x makes with the xy-plane. (-z is positive)
@@ -90,14 +106,12 @@ def quat_multiply(q1, q2):
 def quat_multiply_n(*quats):
     return reduce(lambda a, b: quat_multiply(a, b), quats)
 
-def quat_conj(q):
-    a, b, c, d = q
-    return np.array([a, -b, -c, -d])
+# def quat_conj(q):
+#     a, b, c, d = q
+#     return np.array([a, -b, -c, -d])
 
-def quat_rotate(q, v):
-    quat_v = np.array([0, *v])
-    quat_rot_v = quat_multiply_n(q, quat_v, quat_conj(q))
-    return quat_rot_v[1:]
+# def quat_rotate(q, v):
+#     return quat_multiply_n(q, np.array([0, *v]), quat_conj(q))[1:]
 
 #endregion
 
@@ -120,15 +134,22 @@ def euler_quat(yaw, pitch, roll):
 
 #region Quaternion to Euler
 
-def quat_to_euler(q):
+def quat_to_euler(q, gimble_lock_threshold=DEFAULT_GIMBLE_LOCK_THESHOLD):
     a, b, c, d = q
     # Get needed components from quaternion's rotation matrix.
     # https://en.wikipedia.org/wiki/Quaternions_and_spatial_rotation#Conversion_to_and_from_the_matrix_representation
     mxx = a*a + b*b - c*c - d*d
     mxy = 2*b*c + 2*a*d
     mxz = 2*b*d - 2*a*c
+
+    if mxx**2 + mxy**2 < gimble_lock_threshold:
+        mzx = 2*b*d + 2*a*c
+        mzy = 2*c*d - 2*a*b
+        return matrix_to_euler_gimble_locked(mxz, mzx, mzy)
+    
     myz = 2*c*d + 2*a*b
     mzz = a*a -b*b -c*c + d*d
-    return matrix_to_euler_optimized(mxx, mxy, mxz, myz, mzz)
+    
+    return matrix_to_euler_standard(mxx, mxy, mxz, myz, mzz)
 
 #endregion
