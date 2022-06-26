@@ -95,7 +95,7 @@ def quat_conj(q):
     return np.array([a, -b, -c, -d])
 
 def quat_rotate(q, v):
-    quat_v = np.array([1, *v])
+    quat_v = np.array([0, *v])
     quat_rot_v = quat_multiply_n(q, quat_v, quat_conj(q))
     return quat_rot_v[1:]
 
