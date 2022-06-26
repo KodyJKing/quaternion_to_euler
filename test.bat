@@ -1,0 +1,1 @@
+nodemon --ext py -x python -m unittest

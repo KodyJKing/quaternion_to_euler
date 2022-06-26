@@ -1,9 +1,5 @@
 from functools import reduce
-from random import Random, random
 import numpy as np
-
-DEGREES = np.pi/180
-RADIANS = 180/np.pi
 
 #region Helpers
 
@@ -134,44 +130,5 @@ def quat_to_euler(q):
     myz = 2*c*d + 2*a*b
     mzz = a*a -b*b -c*c + d*d
     return matrix_to_euler_optimized(mxx, mxy, mxz, myz, mzz)
-
-#endregion
-
-#region Tests
-
-r = Random()
-np.set_printoptions(precision=3)
-
-def random_euler_angles():
-    return np.array([
-        r.uniform(-180, 180)*DEGREES, 
-        r.uniform(-90,  90 )*DEGREES,
-        r.uniform(-180, 180)*DEGREES
-    ])
-
-def compare_angles(angles_in, angles_out):
-    print("   In:   ", angles_in*RADIANS)
-    print("   Out:  ", angles_out*RADIANS)
-    print("   Diff: ", (angles_in-angles_out)*RADIANS)
-
-def test_matrix_to_euler():
-    angles_in = random_euler_angles()
-    m = euler_matrix(*angles_in)
-    angles_out = matrix_to_euler(m)
-    print("\nMatrices: ")
-    compare_angles(angles_in, angles_out)
-
-test_matrix_to_euler()
-
-def test_quat_to_euler():
-    angles_in = random_euler_angles()
-    q = euler_quat(*angles_in)
-    angles_out = quat_to_euler(q)
-    print("\nQuaternions: ")
-    compare_angles(angles_in, angles_out)
-
-test_quat_to_euler()
-
-print()
 
 #endregion
