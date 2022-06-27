@@ -40,12 +40,10 @@ def yaw_matrix(theta):
         [0,  0, 1]
     ])
 def euler_matrix(yaw, pitch, roll):
-    return np.matmul(
+    return matmul_n(
         yaw_matrix(yaw),
-        np.matmul(
-            pitch_matrix(pitch),
-            roll_matrix(roll)
-        )
+        pitch_matrix(pitch),
+        roll_matrix(roll)
     )
 
 #endregion
