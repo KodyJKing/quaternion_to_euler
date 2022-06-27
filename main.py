@@ -68,6 +68,11 @@ def matrix_to_euler(m, gimble_lock_threshold=DEFAULT_GIMBLE_LOCK_THESHOLD):
     return matrix_to_euler_standard(mxx, mxy, mxz, myz, mzz)
 
 def matrix_to_euler_gimble_locked(mxz, mzx, mzy):
+    """ Works on matrices of the form: \n
+            --- --- mzx \n
+            --- --- mzy \n
+            mxz --- --- \n
+    where |mxz| = 1 """
     sgn_pitch = np.sign(-mxz)
     cos_yaw = mzx * sgn_pitch
     sin_yaw = mzy * sgn_pitch
@@ -75,6 +80,11 @@ def matrix_to_euler_gimble_locked(mxz, mzx, mzy):
     return np.array([yaw, np.pi/2 * sgn_pitch, 0])
 
 def matrix_to_euler_standard(mxx, mxy, mxz, myz, mzz):
+    """ Works on matrices of the form: \n
+            mxx --- --- \n
+            mxy --- --- \n
+            mxz myz mzz \n
+    where |mxz| < 1 """
     # Yaw is the angle column-x.xy makes the x-axis. (+y is positive)
     yaw = np.arctan2(mxy, mxx)
     # Pitch is the angle column-x makes with the xy-plane. (-z is positive)
